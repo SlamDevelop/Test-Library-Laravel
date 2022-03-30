@@ -66,11 +66,11 @@ class BooksController extends Controller
                 $publishers_book->publishers_id = $request->publisher_id;
                 $book->authors_ids()->save($publishers_book);
             } else {
-                return response()->json(['error' => 'Book already exists'], 200);
+                return response()->json(['error' => 'The book already exists'], 200);
             }
         }
 
-        return response()->json($book, 201);
+        return response()->json(true, 201);
     }
 
     public function update(Request $request, Books $books)
@@ -80,9 +80,40 @@ class BooksController extends Controller
         return response()->json($books);
     }
 
-    public function delete(Books $books)
+    public function delete(Request $request, Books $books)
     {
-        $books->delete();
+        $validator = Validator::make($request->all(), [
+            'publisher_id' => 'required|string',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json($validator->messages(), 400);
+        }
+
+        // Checking the availability of the book in the library with the publisher
+        // If yes, removing all links related to the publisher, else an error will occur
+        $publishers = $books->publishers->where('id', $request->publisher_id)->first();
+        if($publishers) {
+            $publishers_book = $books->publishers_ids->where('publishers_id', $request->publisher_id)->first();
+            $publishers_book->delete();
+
+            // If the author has no more books, deleting the author
+            $books->authors->each(function($author) {
+                if($author->books->count() <= 1) {
+                    $author->delete();
+                }
+            });
+
+            // If a book no longer has publishers, then deleting the book itself + authors and links to them
+            if($books->publishers->count() <= 1) {
+                $books->authors_ids->each(function($book_author) {
+                    $book_author->delete();
+                });
+                $books->delete();
+            }
+        } else {
+            return response()->json(['error' => 'The book is not in your library'], 200);
+        }
 
         return response()->json(null, 200);
     }
