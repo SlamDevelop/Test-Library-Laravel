@@ -8,4 +8,38 @@ use Illuminate\Database\Eloquent\Model;
 class Books extends Model
 {
     protected $fillable = ['name'];
+
+    public function authors()
+    {
+        return $this->hasManyThrough(
+            Authors::class,
+            BooksAuthor::class,
+            'book_id', // Foreign key on the books_author authors table
+            'id', // Foreign key on the authors table
+            'id', // Local key on the books table
+            'id' // Local key on the authors table
+        );
+    }
+
+    public function authors_ids()
+    {
+        return $this->hasMany(BooksAuthor::class);
+    }
+
+    public function publishers()
+    {
+        return $this->hasManyThrough(
+            Publishers::class,
+            PublishersBook::class,
+            'book_id', // Foreign key on the publishers_books authors table
+            'id', // Foreign key on the publishers table
+            'id', // Local key on the books table
+            'id' // Local key on the publishers table
+        );
+    }
+
+    public function publishers_ids()
+    {
+        return $this->hasMany(PublishersBook::class);
+    }
 }

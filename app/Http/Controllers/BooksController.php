@@ -3,7 +3,11 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Validator;
 use App\Models\Books;
+use App\Models\Authors;
+use App\Models\BooksAuthor;
+use App\Models\PublishersBook;
 
 class BooksController extends Controller
 {
@@ -14,9 +18,59 @@ class BooksController extends Controller
 
     public function create(Request $request)
     {
-        $books = Books::create($request->all());
+        $validator = Validator::make($request->all(), [
+            // 'api_token' => 'required|string',
+            'publisher_id' => 'required|string',
+            'name' => 'required|string',
+            'authors' => 'required|array|min:1',
+            'authors.*' => 'required|string',
+        ]);
+         
+        if ($validator->fails()) {
+            return response()->json($validator->messages(), 400);
+        }
 
-        return response()->json($books);
+        // Checking for the exist of a book
+        $book = Books::where('name', $request['name'])->first();
+        if(!$book) {
+            // Create book
+            $book = Books::create([
+                'name' => $request->name
+            ]);
+
+            // Handling authors
+            foreach($request->authors as $author_name) {
+                $author = Authors::where('name', $author_name)->first();
+                // Create if it doesn`t exist
+                if(!$author) {
+                    $author = Authors::create([
+                        'name' => $author_name
+                    ]);
+                }
+                // Creating links to authors in the intermediate table books_authors
+                $book_author = new BooksAuthor;
+                $book_author->authors_id = $author->id;
+                $book->authors_ids()->save($book_author);
+            }
+
+            // Creating link to publisher in the intermediate table publishers_books
+            $publishers_book = new PublishersBook;
+            $publishers_book->publishers_id = $request->publisher_id;
+            $book->publishers_ids()->save($publishers_book);
+        } else {
+            // Checking for the existence of link to publisher in the publishers_books table
+            // Created, if not, else the message of the exist
+            if(!$book->publishers_ids->where('publishers_id', $request->publisher_id)->first()) {
+                // Creating link to publisher in the intermediate table publishers_books
+                $publishers_book = new PublishersBook;
+                $publishers_book->publishers_id = $request->publisher_id;
+                $book->authors_ids()->save($publishers_book);
+            } else {
+                return response()->json(['error' => 'Book already exists'], 200);
+            }
+        }
+
+        return response()->json($book, 201);
     }
 
     public function update(Request $request, Books $books)
