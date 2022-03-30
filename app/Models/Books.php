@@ -14,10 +14,10 @@ class Books extends Model
         return $this->hasManyThrough(
             Authors::class,
             BooksAuthor::class,
-            'book_id', // Foreign key on the books_author authors table
+            'books_id', // Foreign key on the books_author authors table
             'id', // Foreign key on the authors table
             'id', // Local key on the books table
-            'id' // Local key on the authors table
+            'authors_id' // Local key on the authors table
         );
     }
 
@@ -31,10 +31,10 @@ class Books extends Model
         return $this->hasManyThrough(
             Publishers::class,
             PublishersBook::class,
-            'book_id', // Foreign key on the publishers_books authors table
+            'books_id', // Foreign key on the publishers_books authors table
             'id', // Foreign key on the publishers table
             'id', // Local key on the books table
-            'id' // Local key on the publishers table
+            'publishers_id' // Local key on the publishers table
         );
     }
 
