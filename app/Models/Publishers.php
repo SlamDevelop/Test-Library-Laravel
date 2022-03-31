@@ -7,5 +7,5 @@ use Illuminate\Database\Eloquent\Model;
 
 class Publishers extends Model
 {
-    protected $fillable = ['name'];
+    protected $fillable = ['name', 'api_token'];
 }

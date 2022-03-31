@@ -21,7 +21,7 @@ class Books extends Model
         );
     }
 
-    public function authors_ids()
+    public function books_author()
     {
         return $this->hasMany(BooksAuthor::class);
     }
@@ -38,7 +38,7 @@ class Books extends Model
         );
     }
 
-    public function publishers_ids()
+    public function publishers_book()
     {
         return $this->hasMany(PublishersBook::class);
     }
