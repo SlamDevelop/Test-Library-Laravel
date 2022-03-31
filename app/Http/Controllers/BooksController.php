@@ -11,7 +11,7 @@ use App\Models\PublishersBook;
 
 class BooksController extends Controller
 {
-    public function get(Books $books = null)
+    public function get(Request $request, Books $books = null)
     {
         return $books ? $books : Books::all();
     }
@@ -31,40 +31,21 @@ class BooksController extends Controller
         }
 
         // Checking for the exist of a book
-        $book = Books::where('name', $request['name'])->first();
+        $book = Books::where('name', $request->name)->first();
         if(!$book) {
             // Create book
             $book = Books::create([
                 'name' => $request->name
             ]);
 
-            // Handling authors
-            foreach($request->authors as $author_name) {
-                $author = Authors::where('name', $author_name)->first();
-                // Create if it doesn`t exist
-                if(!$author) {
-                    $author = Authors::create([
-                        'name' => $author_name
-                    ]);
-                }
-                // Creating links to authors in the intermediate table books_authors
-                $book_author = new BooksAuthor;
-                $book_author->authors_id = $author->id;
-                $book->authors_ids()->save($book_author);
-            }
-
-            // Creating link to publisher in the intermediate table publishers_books
-            $publishers_book = new PublishersBook;
-            $publishers_book->publishers_id = $request->publisher_id;
-            $book->publishers_ids()->save($publishers_book);
+            // Handling book parameters
+            $this->handleBook($book, $request);
         } else {
             // Checking for the existence of link to publisher in the publishers_books table
             // Created, if not, else the message of the exist
             if(!$book->publishers_ids->where('publishers_id', $request->publisher_id)->first()) {
-                // Creating link to publisher in the intermediate table publishers_books
-                $publishers_book = new PublishersBook;
-                $publishers_book->publishers_id = $request->publisher_id;
-                $book->authors_ids()->save($publishers_book);
+                // Handling book parameters
+                $this->handleBook($book, $request);
             } else {
                 return response()->json(['error' => 'The book already exists'], 200);
             }
@@ -75,9 +56,33 @@ class BooksController extends Controller
 
     public function update(Request $request, Books $books)
     {
-        $books->update($request->all());
+        // $books->update($request->all());
+        $validator = Validator::make($request->all(), [
+            'publisher_id' => 'required|string',
+        ]);
 
-        return response()->json($books);
+        if ($validator->fails()) {
+            return response()->json($validator->messages(), 400);
+        }
+
+        // Checking the availability of the book in the library with the publisher
+        // If yes, update the book, otherwise an error will occur
+        $publishers = $books->publishers->where('id', $request->publisher_id)->first();
+        if($publishers) {
+            // If there exists a book name, update it
+            if(!empty($request->name)) {
+                $books->name = $request->name;
+                $books->save();
+            }
+
+            // Handling book parameters
+            $this->handleBook($books, $request);
+        }
+        else {
+            return response()->json(['error' => 'The book is not in your library'], 200);
+        }
+
+        return response()->json(true, 200);
     }
 
     public function delete(Request $request, Books $books)
@@ -115,6 +120,44 @@ class BooksController extends Controller
             return response()->json(['error' => 'The book is not in your library'], 200);
         }
 
-        return response()->json(null, 200);
+        return response()->json(true, 200);
+    }
+
+    private function handleBook($book, $data)
+    {
+        // Handling authors
+        // The check is necessary because there may not be an array of authors in @update
+        if(!empty($data->authors) && is_array($data->authors)) {
+            // First we remove the author for future correction
+            $book->authors->each(function($author) {
+                if($author->books->count() <= 1) {
+                    $author->delete();
+                }
+            });
+            $book->authors_ids->each(function($book_author) {
+                $book_author->delete();
+            });
+
+            // Creating an updated list of authors of the book
+            foreach($data->authors as $author_name) {
+                $author = Authors::where('name', $author_name)->first();
+                // Create if it doesn`t exist
+                if(!$author) {
+                    $author = Authors::updateOrCreate(
+                        ['name' => $author_name]
+                    );
+                }
+                // Creating links to authors in the intermediate table books_authors
+                $book_author = new BooksAuthor;
+                $book->authors_ids()->updateOrCreate(
+                    ['authors_id' => $author->id]
+                );
+            }
+        }
+
+        // Creating link to publisher in the intermediate table publishers_books
+        $book->publishers_ids()->updateOrCreate(
+            ['publishers_id' => $data->publisher_id]
+        );
     }
 }

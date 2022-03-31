@@ -18,17 +18,8 @@ use Illuminate\Support\Facades\Route;
 //     return $request->user();
 // });
 
-// AUTHORS
-Route::get('author/{authors?}', 'AuthorsController@get');
-Route::post('author', 'AuthorsController@create');
-Route::put('author/{authors}', 'AuthorsController@update');
-Route::delete('author/{authors}', 'AuthorsController@delete');
-
 // PUBLISHERS
-Route::get('publisher/{publishers?}', 'PublishersController@get');
 Route::post('publisher', 'PublishersController@create');
-Route::put('publisher/{publishers}', 'PublishersController@update');
-Route::delete('publisher/{publishers}', 'PublishersController@delete');
 
 // BOOKS
 Route::get('book/{books?}', 'BooksController@get');
