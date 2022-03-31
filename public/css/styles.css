@@ -1,0 +1,48 @@
+.library-wrap {
+    display: grid;
+    gap: 1rem;
+    grid-template-columns: repeat(1, 1fr);
+}
+.book {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    padding: 1rem;
+    background: rgb(108, 167, 113, 0.25);
+    border-radius: 20px;
+}
+.book .name {
+    font-size: 1.5rem;
+    font-weight: bold;
+}
+.book label {
+    font-weight: bold;
+}
+
+/* Small devices (landscape phones, 576px and up) */
+@media (min-width: 576px) {
+    .library-wrap {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+/* Medium devices (tablets, 768px and up) */
+@media (min-width: 768px) { 
+    .library-wrap {
+        grid-template-columns: repeat(3, 1fr);
+    }
+}
+
+/* Large devices (desktops, 992px and up) */
+@media (min-width: 992px) {
+    .library-wrap {
+        grid-template-columns: repeat(4, 1fr);
+    }
+}
+
+/* X-Large devices (large desktops, 1200px and up) */
+@media (min-width: 1200px) {
+    .library-wrap {
+        grid-template-columns: repeat(5, 1fr);
+    }
+}

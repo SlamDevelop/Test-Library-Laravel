@@ -19,10 +19,10 @@ use Illuminate\Support\Facades\Route;
 // });
 
 // PUBLISHERS
-Route::post('publisher', 'PublishersController@create');
+Route::post('publisher', 'Api\PublishersController@create');
 
 // BOOKS
-Route::get('book/{books?}', 'BooksController@get');
-Route::post('book', 'BooksController@create');
-Route::put('book/{books}', 'BooksController@update');
-Route::delete('book/{books}', 'BooksController@delete');
+Route::get('book/{books?}', 'Api\BooksController@get');
+Route::post('book', 'Api\BooksController@create');
+Route::put('book/{books}', 'Api\BooksController@update');
+Route::delete('book/{books}', 'Api\BooksController@delete');
